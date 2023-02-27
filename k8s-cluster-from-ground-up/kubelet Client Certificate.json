@@ -1,0 +1,38 @@
+for i in 0 1 2; do
+  instance="${NAME}-worker-${i}"
+  instance_hostname="ip-172-31-0-2${i}"
+  cat > ${instance}-csr.json <<EOF
+{
+  "CN": "system:node:${instance_hostname}",
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "US",
+      "L": "St Francis",
+      "O": "system:nodes",
+      "OU": "BABA-Deen DEVOPS",
+      "ST": "Minnesota"
+    }
+  ]
+}
+EOF
+
+  external_ip=$(aws ec2 describe-instances \
+    --filters "Name=tag:Name,Values=${instance}" \
+    --output text --query 'Reservations[].Instances[].PublicIpAddress')
+
+  internal_ip=$(aws ec2 describe-instances \
+    --filters "Name=tag:Name,Values=${instance}" \
+    --output text --query 'Reservations[].Instances[].PrivateIpAddress')
+
+  cfssl gencert \
+    -ca=ca.pem \
+    -ca-key=ca-key.pem \
+    -config=ca-config.json \
+    -hostname=${instance_hostname},${external_ip},${internal_ip} \
+    -profile=kubernetes \
+    ${NAME}-worker-${i}-csr.json | cfssljson -bare ${NAME}-worker-${i}
+done

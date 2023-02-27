@@ -1,0 +1,27 @@
+for i in 0 1 2; do
+
+instance="${NAME}-worker-${i}"
+instance_hostname="ip-172-31-0-2${i}"
+
+ # Set the kubernetes cluster in the kubeconfig file
+  kubectl config set-cluster ${NAME} \
+    --certificate-authority=ca.pem \
+    --embed-certs=true \
+    --server=https://$KUBERNETES_API_SERVER_ADDRESS:6443 \
+    --kubeconfig=${instance}.kubeconfig
+
+# Set the cluster credentials in the kubeconfig file
+  kubectl config set-credentials system:node:${instance_hostname} \
+    --client-certificate=${instance}.pem \
+    --client-key=${instance}-key.pem \
+    --embed-certs=true \
+    --kubeconfig=${instance}.kubeconfig
+
+# Set the context in the kubeconfig file
+  kubectl config set-context default \
+    --cluster=${NAME} \
+    --user=system:node:${instance_hostname} \
+    --kubeconfig=${instance}.kubeconfig
+
+  kubectl config use-context default --kubeconfig=${instance}.kubeconfig
+done

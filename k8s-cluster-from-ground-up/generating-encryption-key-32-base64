@@ -1,0 +1,5 @@
+ETCD_ENCRYPTION_KEY=$(head -c 32 /dev/urandom | base64)
+
+# output
+
+WlVftQtP0YPFe3+uzDBkFc4AVPw3B7P0G5wfyuQJM5U=
